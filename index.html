@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dlk / os</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080808;--s1:#101010;--s2:#161616;--s3:#1e1e1e;
+  --b1:#1c1c1c;--b2:#282828;--b3:#363636;
+  --text:#e2e2e2;--t2:#777;--t3:#3a3a3a;
+  --green:#1D9E75;--gbg:#0a2218;--gt:#5DCAA5;
+  --purple:#7F77DD;--pbg:#181630;--pt:#AFA9EC;
+  --amber:#BA7517;--abg:#201400;--at:#FAC775;
+  --blue:#378ADD;--bbg:#0b1c2e;--bt:#85B7EB;
+  --red:#E24B4A;--rbg:#1e0808;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;font-size:14px;line-height:1.5;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* NAV */
+nav{display:flex;align-items:center;padding:0 24px;border-bottom:1px solid var(--b1);background:var(--s1);position:sticky;top:0;z-index:100;gap:2px;}
+.brand{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--t2);letter-spacing:.1em;padding:16px 0;margin-right:24px;flex-shrink:0;}
+.brand em{color:var(--gt);font-style:normal;}
+.ntab{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--t2);padding:17px 16px 16px;cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;transition:all .12s;text-transform:uppercase;}
+.ntab:hover{color:var(--text);}
+.ntab.act{color:var(--text);border-bottom-color:var(--green);}
+.page{display:none;padding:24px;max-width:980px;margin:0 auto;}
+.page.act{display:block;}
+
+/* TYPE */
+.lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--t2);}
+.sec{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--t2);margin-bottom:12px;}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px 18px;}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+@media(max-width:640px){.g4{grid-template-columns:1fr 1fr;}.two-col{grid-template-columns:1fr!important;}}
+
+/* STAT */
+.stat{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:14px 16px;}
+.stat-val{font-size:30px;font-weight:500;font-family:'IBM Plex Mono',monospace;line-height:1;margin-bottom:4px;}
+.stat-lbl{font-size:10px;color:var(--t2);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em;}
+
+/* BLOCKS */
+.blk{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;background:var(--s1);border:1px solid var(--b1);border-radius:8px;margin-bottom:6px;transition:border-color .12s;}
+.blk:hover{border-color:var(--b2);}
+.blk-pill{width:3px;min-height:36px;border-radius:2px;flex-shrink:0;}
+.blk-n{font-size:10px;color:var(--t3);font-family:'IBM Plex Mono',monospace;min-width:20px;padding-top:2px;}
+.blk-title{font-size:13px;font-weight:500;color:var(--text);}
+.blk-dur{font-size:11px;color:var(--t2);font-family:'IBM Plex Mono',monospace;margin:2px 0;}
+.blk-sub{font-size:11px;color:var(--t2);}
+
+/* HABITS */
+.hab{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:transparent;border:1px solid var(--b1);border-radius:8px;cursor:pointer;margin-bottom:6px;transition:all .12s;text-align:left;}
+.hab:hover{border-color:var(--b2);}
+.hab.done{background:var(--gbg);border-color:var(--green);}
+.hab-box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--b3);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.hab.done .hab-box{background:var(--green);border-color:var(--green);}
+.chk{width:8px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px);opacity:0;}
+.hab.done .chk{opacity:1;}
+.hab-lbl{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--t2);transition:color .12s;}
+.hab.done .hab-lbl{color:var(--gt);}
+
+/* DAY TABS */
+.dtabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;}
+.dtab{padding:5px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--b1);background:transparent;color:var(--t2);transition:all .12s;letter-spacing:.04em;}
+.dtab:hover{border-color:var(--b2);color:var(--text);}
+.dtab.act{background:var(--s2);color:var(--text);border-color:var(--b2);}
+.dtab.today{border-color:var(--green);color:var(--gt);}
+.dtab.today.act{background:var(--gbg);}
+.dtab.full::after{content:'·';margin-left:4px;color:var(--green);}
+
+/* PROGRESS */
+.pbar{height:4px;background:var(--b2);border-radius:2px;overflow:hidden;}
+.pfill{height:100%;background:var(--green);border-radius:2px;transition:width .4s;}
+
+/* TIMER */
+.timer-wrap{max-width:480px;margin:0 auto;}
+.timer-top{text-align:center;padding:40px 0 28px;}
+.timer-mode-lbl{font-size:11px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--t2);margin-bottom:14px;}
+.timer-clock{font-size:76px;font-family:'IBM Plex Mono',monospace;font-weight:500;letter-spacing:-3px;line-height:1;color:var(--text);transition:color .3s;}
+.timer-clock.run{color:var(--gt);}
+.timer-clock.brk{color:var(--pt);}
+.timer-info{font-size:11px;color:var(--t2);font-family:'IBM Plex Mono',monospace;margin-top:10px;}
+.tctrls{display:flex;justify-content:center;gap:10px;margin:24px 0;}
+.btn{padding:10px 22px;border-radius:8px;cursor:pointer;font-size:12px;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;border:1px solid var(--b2);background:transparent;color:var(--text);transition:all .12s;}
+.btn:hover{background:var(--s2);border-color:var(--b3);}
+.btn.pri{background:var(--green);border-color:var(--green);color:#fff;}
+.btn.pri:hover{background:#179467;}
+.btn.sec{border-color:var(--b2);}
+.btn.dng{border-color:var(--red);color:var(--red);}
+.btn.dng:hover{background:var(--rbg);}
+select{background:var(--s2);border:1px solid var(--b2);color:var(--text);padding:9px 12px;border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;outline:none;width:100%;}
+select:focus{border-color:var(--green);}
+input[type=number]{background:var(--s2);border:1px solid var(--b2);color:var(--text);padding:8px 12px;border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:13px;width:72px;outline:none;text-align:center;}
+input[type=number]:focus{border-color:var(--green);}
+
+/* SESSION LOG */
+.srow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b1);}
+.srow:last-child{border-bottom:none;}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.slbl{font-size:12px;flex:1;color:var(--text);}
+.sdur{font-size:11px;color:var(--t2);font-family:'IBM Plex Mono',monospace;}
+.stime{font-size:10px;color:var(--t3);font-family:'IBM Plex Mono',monospace;}
+
+/* WEEK GRID */
+.wgrid{display:grid;border:1px solid var(--b1);border-radius:10px;overflow:hidden;min-width:600px;}
+.wgh{padding:8px 10px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--t2);text-align:center;}
+.wgh:first-child{text-align:left;}
+.wgcell{padding:8px 10px;border-bottom:1px solid var(--b1);border-left:1px solid var(--b1);text-align:center;background:var(--s1);}
+.wglbl{padding:8px 10px;border-bottom:1px solid var(--b1);font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--t2);background:var(--s1);}
+.wgtick{width:10px;height:10px;border-radius:50%;background:var(--green);margin:0 auto;}
+.wgempty{width:10px;height:10px;border-radius:50%;background:var(--b2);margin:0 auto;}
+.wgtoday{background:var(--s2)!important;}
+
+/* REPORT TABLE */
+.rtbl{width:100%;border-collapse:collapse;font-size:12px;}
+.rtbl th{text-align:left;padding:8px 12px;border-bottom:1px solid var(--b2);font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--t2);}
+.rtbl td{padding:8px 12px;border-bottom:1px solid var(--b1);}
+.rtbl tr:last-child td{border-bottom:none;}
+
+/* LAYOUT */
+.two-col{display:grid;grid-template-columns:1fr 220px;gap:16px;}
+.flex{display:flex;}.fc{display:flex;align-items:center;}.fb{display:flex;justify-content:space-between;align-items:center;}
+.gap8{gap:8px;}.gap12{gap:12px;}
+.mb8{margin-bottom:8px;}.mb12{margin-bottom:12px;}.mb16{margin-bottom:16px;}.mb20{margin-bottom:20px;}
+.mt8{margin-top:8px;}.mt12{margin-top:12px;}.mt16{margin-top:16px;}
+.div{height:1px;background:var(--b1);margin:14px 0;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:10px 16px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text);opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.04em;}
+
+/* PRINT */
+@media print{
+  nav,.btn,.tctrls,select,.dtabs{display:none!important;}
+  .page{display:block!important;padding:0!important;}
+  body{background:#fff;color:#000;}
+  .card,.stat,.stat-card,.blk{border:1px solid #ddd;background:#fff;}
+  .stat-val,.blk-title,.slbl,.rtbl td{color:#000;}
+  .t2,.lbl,.sec,.stat-lbl,.blk-dur,.blk-sub{color:#666;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">dlk<em>/</em>os</div>
+  <button class="ntab act" onclick="go('today',this)">today</button>
+  <button class="ntab" onclick="go('week',this)">week</button>
+  <button class="ntab" onclick="go('timer',this)">pomodoro</button>
+  <button class="ntab" onclick="go('report',this)">report</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- TODAY -->
+<div class="page act" id="page-today">
+  <div class="fb mb20">
+    <div>
+      <div class="lbl mb8" id="today-date-lbl"></div>
+      <div class="fc gap12">
+        <div style="font-size:38px;font-weight:500;font-family:'IBM Plex Mono',monospace;line-height:1;" id="streak-n">0</div>
+        <div>
+          <div style="font-size:10px;color:var(--t2);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em;">day streak</div>
+          <div style="display:flex;gap:4px;margin-top:5px;" id="streak-dots"></div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div class="lbl mb8">today</div>
+      <div style="font-size:14px;font-weight:500;" id="h-fyp"></div>
+      <div style="font-size:11px;color:var(--t2);" id="h-neet"></div>
+    </div>
+  </div>
+
+  <div class="dtabs" id="dtabs"></div>
+
+  <div class="two-col">
+    <div>
+      <div class="sec">routine</div>
+      <div id="blks"></div>
+    </div>
+    <div>
+      <div class="card mb12">
+        <div class="sec">check off</div>
+        <div id="habs"></div>
+        <div class="div"></div>
+        <div class="fc gap12">
+          <svg width="48" height="48" viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="20" fill="none" stroke="var(--b2)" stroke-width="3"/>
+            <circle id="ring" cx="24" cy="24" r="20" fill="none" stroke="var(--green)" stroke-width="3"
+              stroke-dasharray="125.7" stroke-dashoffset="125.7" stroke-linecap="round"
+              transform="rotate(-90 24 24)" style="transition:stroke-dashoffset .3s;"/>
+          </svg>
+          <div>
+            <div style="font-size:22px;font-weight:500;font-family:'IBM Plex Mono',monospace;" id="pct-n">0%</div>
+            <div style="font-size:10px;color:var(--t2);font-family:'IBM Plex Mono',monospace;">done today</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec">week at a glance</div>
+        <div id="week-mini"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WEEK -->
+<div class="page" id="page-week">
+  <div class="fb mb20">
+    <div class="lbl" id="week-range-lbl"></div>
+  </div>
+  <div class="g4 mb20" id="week-stats"></div>
+  <div class="sec">habit grid</div>
+  <div style="overflow-x:auto;margin-bottom:20px;">
+    <div class="wgrid" id="wgrid"></div>
+  </div>
+  <div class="sec">daily completion</div>
+  <div class="card" id="day-bars"></div>
+</div>
+
+<!-- TIMER -->
+<div class="page" id="page-timer">
+  <div class="timer-wrap">
+    <div class="timer-top">
+      <div class="timer-mode-lbl" id="tm-mode">work session</div>
+      <div class="timer-clock" id="tm-clock">25:00</div>
+      <div class="timer-info" id="tm-info">session 1 · 4 until long break</div>
+    </div>
+
+    <div class="card mb12">
+      <div class="sec">session label</div>
+      <select id="tm-label">
+        <option value="FYP Block 1">FYP Block 1</option>
+        <option value="FYP Block 2">FYP Block 2</option>
+        <option value="NeetCode">NeetCode</option>
+        <option value="Classes">Classes</option>
+        <option value="Review / Reading">Review / Reading</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="tctrls">
+      <button class="btn sec" onclick="tmReset()">reset</button>
+      <button class="btn pri" id="tm-toggle" onclick="tmToggle()">start</button>
+      <button class="btn sec" onclick="tmSkip()">skip →</button>
+    </div>
+
+    <div class="card mb12">
+      <div class="sec">timer settings</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;">
+        <div>
+          <div class="lbl mb8">work</div>
+          <input type="number" id="s-work" value="25" min="1" max="120" onchange="sChange()">
+          <div style="font-size:10px;color:var(--t2);margin-top:4px;font-family:'IBM Plex Mono',monospace;">min</div>
+        </div>
+        <div>
+          <div class="lbl mb8">break</div>
+          <input type="number" id="s-brk" value="5" min="1" max="30" onchange="sChange()">
+          <div style="font-size:10px;color:var(--t2);margin-top:4px;font-family:'IBM Plex Mono',monospace;">min</div>
+        </div>
+        <div>
+          <div class="lbl mb8">long break</div>
+          <input type="number" id="s-lng" value="15" min="1" max="60" onchange="sChange()">
+          <div style="font-size:10px;color:var(--t2);margin-top:4px;font-family:'IBM Plex Mono',monospace;">min</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="fb mb12">
+        <div class="sec" style="margin-bottom:0;">today's sessions</div>
+        <div style="font-size:10px;color:var(--t2);font-family:'IBM Plex Mono',monospace;" id="tm-total"></div>
+      </div>
+      <div id="slog"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div class="page" id="page-report">
+  <div class="fb mb20">
+    <div class="lbl" id="rpt-wk-lbl"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn sec" onclick="dlCSV()">↓ download CSV</button>
+      <button class="btn pri" onclick="window.print()">print report</button>
+    </div>
+  </div>
+  <div class="g4 mb20" id="rpt-stats"></div>
+  <div class="sec">habit breakdown</div>
+  <div class="card mb20" style="overflow-x:auto;">
+    <table class="rtbl" id="rpt-tbl"></table>
+  </div>
+  <div class="sec">pomodoro log — all time</div>
+  <div class="card mb20">
+    <table class="rtbl" id="rpt-sessions"></table>
+  </div>
+  <div style="font-size:10px;color:var(--t2);font-family:'IBM Plex Mono',monospace;text-align:center;padding-top:4px;">
+    all data is stored locally in your browser · never leaves your device
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const WD_HABS=['4:30/5am wake','gym 2hrs','FYP 6hrs','NeetCode','classes','sleep by 11'];
+const WE_HABS=['4:30/5am wake','gym 2hrs','FYP 6hrs','NeetCode','sleep by 11'];
+
+const WD_BLKS=[
+  {c:'#5DCAA5',t:'wake up',d:'4:30 or 5am',s:'water, no phone, stretch'},
+  {c:'#1D9E75',t:'gym',d:'2 hrs',s:'schedule everything around this'},
+  {c:'#555',t:'shower + eat',d:'30 min',s:'fuel before the brain work'},
+  {c:'#7F77DD',t:'FYP block 1',d:'3 hrs',s:'deepest work — before or after classes'},
+  {c:'#378ADD',t:'classes',d:'as scheduled',s:'attend every single one'},
+  {c:'#555',t:'lunch + break',d:'45 min',s:'real break — step away from screens'},
+  {c:'#7F77DD',t:'FYP block 2',d:'3 hrs',s:"finish today's task, commit before closing"},
+  {c:'#BA7517',t:'NeetCode',d:'45 min',s:'one problem, full focus, no skipping'},
+  {c:'#555',t:'wind down',d:'before 11pm',s:'no screens, prep tomorrow, sleep 10:30–11'},
+];
+const WE_BLKS=[
+  {c:'#5DCAA5',t:'wake up',d:'4:30 or 5am',s:'same anchor, every day'},
+  {c:'#1D9E75',t:'gym',d:'2 hrs',s:''},
+  {c:'#555',t:'shower + eat',d:'30 min',s:''},
+  {c:'#7F77DD',t:'FYP block 1',d:'3 hrs',s:'use the quiet morning hours'},
+  {c:'#BA7517',t:'NeetCode',d:'45 min',s:'one problem'},
+  {c:'#555',t:'break + food',d:'45 min',s:'actual rest — not doom scrolling'},
+  {c:'#7F77DD',t:'FYP block 2',d:'3 hrs',s:'close the week strong'},
+  {c:'#555',t:'personal time',d:'rest of day',s:'fully earned'},
+  {c:'#555',t:'wind down',d:'before 10:30pm',s:"review what's next on Monday"},
+];
+
+const FYP=[
+  ['JwtTokenProvider','token generator + validator'],
+  ['JwtAuthFilter','intercept requests, extract token'],
+  ['SecurityConfig','wire Spring Security config'],
+  ['Integration test','Postman all secured endpoints'],
+  ['Fix + clean + commit','review, bugs, document'],
+  ['Buffer / advance','next module if ahead'],
+  ['Light review only','read docs, no pressure'],
+];
+const NEET=[
+  'Top K Frequent Elements','Product of Array Except Self',
+  'Valid Sudoku','Encode / Decode Strings',
+  'Longest Consecutive Sequence','Translate this week → Python','Rest or catch up',
+];
+
+// ── STORAGE ───────────────────────────────────────────────────
+function wkKey(){
+  const n=new Date(),dw=n.getDay(),diff=dw===0?-6:1-dw;
+  const m=new Date(n);m.setDate(n.getDate()+diff);m.setHours(0,0,0,0);
+  return 'dlk_h_'+m.toISOString().slice(0,10);
+}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function monStr(){
+  const n=new Date(),dw=n.getDay(),diff=dw===0?-6:1-dw;
+  const m=new Date(n);m.setDate(n.getDate()+diff);m.setHours(0,0,0,0);
+  return m.toISOString().slice(0,10);
+}
+
+function lsGet(k,fb){try{return JSON.parse(localStorage.getItem(k))??fb;}catch{return fb;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+
+let habits=lsGet(wkKey(),Array.from({length:7},()=>[]));
+let sessions=lsGet('dlk_sessions',[]);
+let cfg=lsGet('dlk_cfg',{work:25,brk:5,lng:15});
+
+function saveH(){lsSet(wkKey(),habits);}
+function saveS(){lsSet('dlk_sessions',sessions);}
+function saveCfg(){lsSet('dlk_cfg',cfg);}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function todayIdx(){const d=new Date().getDay();return d===0?6:d-1;}
+function habs(i){return i>=5?WE_HABS:WD_HABS;}
+function dayPct(i){const h=habs(i),ch=habits[i]||[];return h.length?ch.length/h.length:0;}
+function dayDone(i){return dayPct(i)===1;}
+function streak(){let s=0,t=todayIdx();for(let i=t;i>=0;i--){if(dayDone(i))s++;else break;}return s;}
+function fmt2(n){return String(n).padStart(2,'0');}
+function fmtSec(s){return fmt2(Math.floor(s/60))+':'+fmt2(s%60);}
+
+function toast(msg,col){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.borderColor=col||'var(--green)';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+// ── NAV ───────────────────────────────────────────────────────
+function go(page,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.ntab').forEach(b=>b.classList.remove('act'));
+  document.getElementById('page-'+page).classList.add('act');
+  btn.classList.add('act');
+  if(page==='week')renderWeek();
+  if(page==='report')renderReport();
+  if(page==='timer')renderSlog();
+}
+
+// ── TODAY ─────────────────────────────────────────────────────
+let curDay=todayIdx();
+
+function renderToday(){
+  document.getElementById('today-date-lbl').textContent=
+    new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+
+  const s=streak();
+  document.getElementById('streak-n').textContent=s;
+  const dots=document.getElementById('streak-dots');dots.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=document.createElement('div');
+    d.style.cssText=`width:8px;height:8px;border-radius:50%;background:${i<s?'var(--green)':'var(--b2)'};`;
+    dots.appendChild(d);
+  }
+
+  const[ft,fs]=FYP[curDay]||['',''];
+  document.getElementById('h-fyp').textContent=ft;
+  document.getElementById('h-neet').textContent='neet: '+NEET[curDay];
+
+  renderDtabs();renderBlks();renderHabs();renderMini();
+}
+
+function renderDtabs(){
+  const ti=todayIdx();
+  const c=document.getElementById('dtabs');c.innerHTML='';
+  DAYS.forEach((d,i)=>{
+    const b=document.createElement('button');
+    let cl='dtab';
+    if(i===curDay)cl+=' act';
+    if(i===ti)cl+=' today';
+    if(dayDone(i))cl+=' full';
+    b.className=cl;b.textContent=d;
+    b.onclick=()=>{curDay=i;renderToday();};
+    c.appendChild(b);
+  });
+}
+
+function renderBlks(){
+  const blks=curDay>=5?WE_BLKS:WD_BLKS;
+  const c=document.getElementById('blks');c.innerHTML='';
+  blks.forEach(({c:col,t,d,s},i)=>{
+    const div=document.createElement('div');div.className='blk';
+    div.innerHTML=`<span class="blk-n">0${i+1}</span><div class="blk-pill" style="background:${col}"></div><div style="flex:1"><div class="blk-title">${t}</div><div class="blk-dur">${d}</div>${s?`<div class="blk-sub">${s}</div>`:''}</div>`;
+    c.appendChild(div);
+  });
+}
+
+function renderHabs(){
+  const h=habs(curDay),ch=habits[curDay]||[];
+  const c=document.getElementById('habs');c.innerHTML='';
+  h.forEach((lbl,j)=>{
+    const done=ch.includes(j);
+    const btn=document.createElement('button');btn.className='hab'+(done?' done':'');
+    btn.innerHTML=`<div class="hab-box"><div class="chk"></div></div><span class="hab-lbl">${lbl}</span>`;
+    btn.onclick=()=>{
+      if(!habits[curDay])habits[curDay]=[];
+      const idx=habits[curDay].indexOf(j);
+      if(idx>-1)habits[curDay].splice(idx,1);else habits[curDay].push(j);
+      saveH();renderHabs();renderRing();renderMini();renderDtabs();
+      if(dayDone(curDay))toast('day complete 🔥');
+    };
+    c.appendChild(btn);
+  });
+  renderRing();
+}
+
+function renderRing(){
+  const p=dayPct(curDay),pn=Math.round(p*100);
+  document.getElementById('pct-n').textContent=pn+'%';
+  document.getElementById('ring').style.strokeDashoffset=125.7-(p*125.7);
+}
+
+function renderMini(){
+  const c=document.getElementById('week-mini');c.innerHTML='';
+  DAYS.forEach((d,i)=>{
+    const p=dayPct(i);
+    const col=p===1?'var(--green)':p>0?'var(--purple)':'var(--b2)';
+    const div=document.createElement('div');div.style.marginBottom='8px';
+    div.innerHTML=`<div class="fb" style="margin-bottom:4px;"><span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--t2);">${d}</span><span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--t2);">${Math.round(p*100)}%</span></div><div class="pbar"><div class="pfill" style="width:${p*100}%;background:${col};"></div></div>`;
+    c.appendChild(div);
+  });
+}
+
+// ── WEEK PAGE ─────────────────────────────────────────────────
+function renderWeek(){
+  const n=new Date(),dw=n.getDay(),diff=dw===0?-6:1-dw;
+  const mon=new Date(n);mon.setDate(n.getDate()+diff);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const fmt=x=>x.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  document.getElementById('week-range-lbl').textContent=(fmt(mon)+' – '+fmt(sun)).toUpperCase();
+
+  let gymD=0,fypD=0,neetD=0,tot=0;
+  DAYS.forEach((_,i)=>{
+    const h=habs(i),ch=habits[i]||[];
+    if(ch.includes(h.indexOf('gym 2hrs')))gymD++;
+    if(ch.includes(h.indexOf('FYP 6hrs')))fypD++;
+    if(ch.includes(h.indexOf('NeetCode')))neetD++;
+    tot+=dayPct(i);
+  });
+
+  document.getElementById('week-stats').innerHTML=[
+    ['gym',gymD+'/7','var(--gt)'],
+    ['FYP',fypD+'/7','var(--pt)'],
+    ['NeetCode',neetD+'/7','var(--at)'],
+    ['overall',Math.round(tot/7*100)+'%','var(--text)'],
+  ].map(([l,v,c])=>`<div class="stat"><div class="stat-val" style="color:${c}">${v}</div><div class="stat-lbl">${l}</div></div>`).join('');
+
+  // grid
+  const ALL_HABS=['4:30/5am wake','gym 2hrs','FYP 6hrs','NeetCode','classes','sleep by 11'];
+  const ti=todayIdx();
+  const grid=document.getElementById('wgrid');
+  grid.style.gridTemplateColumns='160px repeat(7,1fr)';
+  grid.innerHTML=`<div class="wgh">habit</div>${DAYS.map((d,i)=>`<div class="wgh ${i===ti?'wgtoday':''}">${d}</div>`).join('')}`;
+  ALL_HABS.forEach(hab=>{
+    grid.innerHTML+=`<div class="wglbl">${hab}</div>`;
+    DAYS.forEach((_,i)=>{
+      const h=habs(i);const ti2=todayIdx();
+      const exists=h.includes(hab);
+      const done=exists&&(habits[i]||[]).includes(h.indexOf(hab));
+      const tc=i===ti2?'wgtoday':'';
+      grid.innerHTML+=exists
+        ?`<div class="wgcell ${tc}"><div class="${done?'wgtick':'wgempty'}"></div></div>`
+        :`<div class="wgcell ${tc}" style="color:var(--t3);font-size:9px;font-family:'IBM Plex Mono',monospace;">—</div>`;
+    });
+  });
+
+  // bars
+  const bars=document.getElementById('day-bars');bars.innerHTML='';
+  DAYS.forEach((d,i)=>{
+    const p=dayPct(i);const col=p===1?'var(--green)':p>0?'var(--purple)':'var(--b2)';
+    bars.innerHTML+=`<div style="margin-bottom:10px;"><div class="fb" style="margin-bottom:5px;"><span style="font-size:12px;font-family:'IBM Plex Mono',monospace;">${d}</span><span style="font-size:11px;color:var(--t2);font-family:'IBM Plex Mono',monospace;">${Math.round(p*100)}%</span></div><div class="pbar" style="height:6px;"><div class="pfill" style="width:${p*100}%;background:${col};"></div></div></div>`;
+  });
+}
+
+// ── TIMER ─────────────────────────────────────────────────────
+let tm={running:false,mode:'work',rem:0,count:0,iv:null};
+
+function initTm(){
+  cfg=lsGet('dlk_cfg',{work:25,brk:5,lng:15});
+  document.getElementById('s-work').value=cfg.work;
+  document.getElementById('s-brk').value=cfg.brk;
+  document.getElementById('s-lng').value=cfg.lng;
+  tm.rem=cfg.work*60;updateTmDisplay();
+}
+
+function sChange(){
+  cfg={
+    work:parseInt(document.getElementById('s-work').value)||25,
+    brk:parseInt(document.getElementById('s-brk').value)||5,
+    lng:parseInt(document.getElementById('s-lng').value)||15,
+  };saveCfg();
+  if(!tm.running){
+    tm.rem=tm.mode==='work'?cfg.work*60:tm.mode==='brk'?cfg.brk*60:cfg.lng*60;
+    updateTmDisplay();
+  }
+}
+
+function tmToggle(){tm.running?tmPause():tmStart();}
+
+function tmStart(){
+  tm.running=true;
+  document.getElementById('tm-toggle').textContent='pause';
+  document.getElementById('tm-clock').classList.add(tm.mode==='work'?'run':'brk');
+  tm.iv=setInterval(tmTick,1000);
+}
+
+function tmPause(){
+  tm.running=false;clearInterval(tm.iv);
+  document.getElementById('tm-toggle').textContent='start';
+  document.getElementById('tm-clock').classList.remove('run','brk');
+}
+
+function tmReset(){
+  tmPause();tm.mode='work';tm.rem=cfg.work*60;tm.count=0;updateTmDisplay();
+}
+
+function tmSkip(){tmPause();advance(false);updateTmDisplay();}
+
+function tmTick(){
+  tm.rem--;
+  if(tm.rem<=0)sessionDone();
+  else updateTmDisplay();
+}
+
+function sessionDone(){
+  tmPause();beep();
+  if(tm.mode==='work'){
+    tm.count++;
+    const lbl=document.getElementById('tm-label').value;
+    sessions.push({id:Date.now(),date:todayStr(),label:lbl,mode:'work',duration:cfg.work,ts:new Date().toISOString()});
+    saveS();renderSlog();
+    toast('session done — take a break ✓');
+  } else {
+    toast('break over — back to it');
+  }
+  advance(true);updateTmDisplay();
+}
+
+function advance(auto){
+  if(tm.mode==='work'){
+    tm.mode=tm.count>0&&tm.count%4===0?'lng':'brk';
+    tm.rem=tm.mode==='lng'?cfg.lng*60:cfg.brk*60;
+  } else {
+    tm.mode='work';tm.rem=cfg.work*60;
+  }
+}
+
+function updateTmDisplay(){
+  const ml={work:'work session',brk:'short break',lng:'long break'};
+  document.getElementById('tm-mode').textContent=ml[tm.mode];
+  document.getElementById('tm-clock').textContent=fmtSec(tm.rem);
+  const n=tm.count+1,left=4-(tm.count%4);
+  document.getElementById('tm-info').textContent=`session ${n} · ${left} until long break`;
+}
+
+function renderSlog(){
+  const td=todayStr();
+  const ts=sessions.filter(s=>s.date===td&&s.mode==='work');
+  const min=ts.reduce((a,s)=>a+s.duration,0);
+  document.getElementById('tm-total').textContent=min?`${min} min tracked today`:'';
+  const c=document.getElementById('slog');
+  if(!ts.length){c.innerHTML=`<div style="font-size:11px;color:var(--t3);font-family:'IBM Plex Mono',monospace;padding:6px 0;">no sessions yet — start one above</div>`;return;}
+  c.innerHTML='';
+  const SCOLS={'FYP Block 1':'#7F77DD','FYP Block 2':'#534AB7','NeetCode':'#BA7517','Classes':'#378ADD','Review / Reading':'#1D9E75'};
+  [...ts].reverse().forEach(s=>{
+    const t=new Date(s.ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const col=SCOLS[s.label]||'#555';
+    const row=document.createElement('div');row.className='srow';
+    row.innerHTML=`<div class="sdot" style="background:${col}"></div><span class="slbl">${s.label}</span><span class="sdur">${s.duration}min</span><span class="stime">${t}</span>`;
+    c.appendChild(row);
+  });
+}
+
+function beep(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [880,1100].forEach((freq,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=freq;o.type='sine';
+      const t=ctx.currentTime+i*0.15;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.25,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+      o.start(t);o.stop(t+0.6);
+    });
+  }catch(e){}
+}
+
+// ── REPORT ────────────────────────────────────────────────────
+function renderReport(){
+  const n=new Date(),dw=n.getDay(),diff=dw===0?-6:1-dw;
+  const mon=new Date(n);mon.setDate(n.getDate()+diff);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const fmt=x=>x.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('rpt-wk-lbl').textContent=('week of '+fmt(mon)+' – '+fmt(sun)).toUpperCase();
+
+  let gymD=0,fypD=0,neetD=0,str=streak();
+  DAYS.forEach((_,i)=>{const h=habs(i),ch=habits[i]||[];
+    if(ch.includes(h.indexOf('gym 2hrs')))gymD++;
+    if(ch.includes(h.indexOf('FYP 6hrs')))fypD++;
+    if(ch.includes(h.indexOf('NeetCode')))neetD++;
+  });
+  const wkSessions=sessions.filter(s=>s.date>=monStr());
+  const pomoMin=wkSessions.reduce((a,s)=>a+s.duration,0);
+
+  document.getElementById('rpt-stats').innerHTML=[
+    ['streak',str+'d','var(--gt)'],['gym',gymD+'/7','var(--gt)'],
+    ['FYP days',fypD+'/7','var(--pt)'],['pomo hrs',(Math.round(pomoMin/6)/10)+'h','var(--at)'],
+  ].map(([l,v,c])=>`<div class="stat"><div class="stat-val" style="color:${c}">${v}</div><div class="stat-lbl">${l}</div></div>`).join('');
+
+  const ALL=['4:30/5am wake','gym 2hrs','FYP 6hrs','NeetCode','classes','sleep by 11'];
+  const tbl=document.getElementById('rpt-tbl');
+  tbl.innerHTML=`<thead><tr><th>habit</th>${DAYS.map(d=>`<th>${d}</th>`).join('')}<th>total</th></tr></thead>`;
+  const tb=document.createElement('tbody');
+  ALL.forEach(hab=>{
+    let total=0;
+    const cells=DAYS.map((_,i)=>{
+      const h=habs(i);if(!h.includes(hab))return `<td style="text-align:center;color:var(--t3);">—</td>`;
+      const done=(habits[i]||[]).includes(h.indexOf(hab));if(done)total++;
+      return `<td style="text-align:center;color:${done?'var(--gt)':'var(--t3)'};">${done?'✓':'·'}</td>`;
+    }).join('');
+    tb.innerHTML+=`<tr><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">${hab}</td>${cells}<td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:500;">${total}</td></tr>`;
+  });tbl.appendChild(tb);
+
+  const stbl=document.getElementById('rpt-sessions');
+  if(!sessions.length){
+    stbl.innerHTML='<tbody><tr><td style="color:var(--t2);font-family:\'IBM Plex Mono\',monospace;font-size:11px;padding:12px;">no sessions logged yet.</td></tr></tbody>';
+    return;
+  }
+  stbl.innerHTML=`<thead><tr><th>date</th><th>label</th><th>duration</th><th>time</th></tr></thead>`;
+  const sb=document.createElement('tbody');
+  [...sessions].reverse().forEach(s=>{
+    const t=new Date(s.ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const dt=new Date(s.date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+    sb.innerHTML+=`<tr><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t2);">${dt}</td><td>${s.label}</td><td style="font-family:'IBM Plex Mono',monospace;">${s.duration}min</td><td style="font-family:'IBM Plex Mono',monospace;color:var(--t2);">${t}</td></tr>`;
+  });stbl.appendChild(sb);
+}
+
+function dlCSV(){
+  const ALL=['4:30/5am wake','gym 2hrs','FYP 6hrs','NeetCode','classes','sleep by 11'];
+  let csv='Day,'+ALL.join(',')+',Completion %\n';
+  DAYS.forEach((d,i)=>{
+    const h=habs(i),ch=habits[i]||[];
+    const row=[d,...ALL.map(hab=>h.includes(hab)?(ch.includes(h.indexOf(hab))?'1':'0'):'N/A'),Math.round(dayPct(i)*100)+'%'];
+    csv+=row.join(',')+'\n';
+  });
+  csv+='\nPomodoro Sessions\nDate,Label,Duration (min),Completed At\n';
+  sessions.forEach(s=>{csv+=`${s.date},${s.label},${s.duration},${s.ts}\n`;});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`dlk-report-${todayStr()}.csv`;a.click();
+  toast('CSV downloaded ↓');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+initTm();
+renderToday();
+renderSlog();
+</script>
+</body>
+</html>
