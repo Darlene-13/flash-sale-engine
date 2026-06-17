@@ -15,7 +15,8 @@ import org.hibernate.annotations.CreationTimestamp;
 @Getter
 @Setter
 @Builder
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class Order{
 
     @Id
@@ -23,7 +24,7 @@ public class Order{
     private Long Id;
 
     @ManyToOne(fetch = FetchType.LAZY) // relationship with the booked product, don't pull full product anytime you load an order
-    @JoinColumn(name = "product", nullable =false)
+    @JoinColumn(name = "product_id", nullable =false)
     private Product product;
 
     @Column(unique = true, nullable = false)
@@ -32,7 +33,7 @@ public class Order{
     @Column(name = "status")
     private OrderStatus status;
 
-    @Column()
+    @Column(nullable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
 
