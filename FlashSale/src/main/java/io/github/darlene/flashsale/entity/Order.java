@@ -12,8 +12,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name ="orders")
-@Getters
-@Setters
+@Getter
+@Setter
 @Builder
 @RequiredArgsConstructor
 public class Order{

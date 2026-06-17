@@ -12,8 +12,8 @@ import org.hibernate.annotations.CreationTimestamp;
 @Entity
 @Table(name = "products")
 @RequiredArgsConstructor
-@Getters
-@Setters
+@Getter
+@Setter
 @Builder
 public class Product{
 
