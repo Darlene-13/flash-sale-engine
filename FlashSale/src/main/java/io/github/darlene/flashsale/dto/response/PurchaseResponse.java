@@ -23,9 +23,9 @@ public class PurchaseResponse{
 
     private Long orderId;
 
-    @JsonFormat()
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime fromDate;
 
-    @JsonFormat()
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime toDate;
 }
